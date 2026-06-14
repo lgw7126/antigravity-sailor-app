@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세일러 (Sailor) - 쇼핑 할인 정보 검색 앱 MVP</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Outfit & Pretendard (Fallback to Inter/Sans-serif) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Noto Sans KR', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+          },
+          colors: {
+            sailor: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              900: '#312e81',
+            },
+            discount: {
+              red: '#f43f5e',
+              bg: '#fff1f2',
+            }
+          },
+          boxShadow: {
+            premium: '0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08)',
+            phone: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Strikethrough style */
+    .price-strike {
+      position: relative;
+      color: #94a3b8;
+    }
+    .price-strike::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 100%;
+      height: 1.5px;
+      background: #f43f5e;
+      opacity: 0.7;
+      transform: rotate(-5deg);
+    }
+
+    /* Slide transition animations */
+    .fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Custom Switch Toggle sliding bg */
+    .toggle-slider {
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-800 font-sans min-h-screen flex items-center justify-center p-0 sm:p-4 md:p-8">
+
+  <!-- Desktop App Container: Left Info Panel + Right App Simulator -->
+  <div class="max-w-6xl w-full flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16 my-auto">
+    
+    <!-- Left Intro Panel (Hidden on mobile) -->
+    <div class="hidden lg:flex flex-col text-slate-100 max-w-sm space-y-6">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-compass-drafting text-2xl text-white"></i>
+        </div>
+        <div>
+          <span class="text-xs uppercase tracking-widest text-indigo-400 font-bold">Shopping Navigator</span>
+          <h1 class="text-3xl font-extrabold font-outfit tracking-tight">Sailor</h1>
+        </div>
+      </div>
+      
+      <p class="text-slate-400 leading-relaxed text-sm">
+        세일러(Sailor)는 현명한 쇼핑을 위한 최저가 정보 나침반입니다. 온라인 쇼핑몰 최저가부터 내 주변 마트의 실시간 오프라인 세일 정보까지 스마트하게 탐색하세요.
+      </p>
+
+      <div class="border-t border-slate-800 pt-6 space-y-4 text-xs text-slate-400">
+        <h3 class="font-bold text-slate-300 uppercase tracking-wider">주요 프로토타입 기능</h3>
+        <ul class="space-y-2.5">
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-check text-indigo-400 mt-0.5"></i>
+            <span><strong>통합 검색</strong>: 검색어 입력 시 즉각적인 키워드 필터링</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-check text-indigo-400 mt-0.5"></i>
+            <span><strong>온/오프라인 토글</strong>: G마켓 최저가와 오프라인 마트 딜의 부드러운 전환</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-check text-indigo-400 mt-0.5"></i>
+            <span><strong>거리별 필터</strong>: 오프라인 모드에서 1km, 3km, 5km 반경 내 마트 선별</span>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <i class="fa-solid fa-circle-check text-indigo-400 mt-0.5"></i>
+            <span><strong>정렬 옵션</strong>: 기본순, 할인율 높은 순, 최저가 순 실시간 정렬</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 text-xs text-slate-400">
+        <span class="text-indigo-400 font-bold block mb-1"><i class="fa-solid fa-info-circle mr-1"></i> UX 디자이너 팁</span>
+        우측 모바일 화면에서 직접 필터를 변경하고 검색창을 조작해 보세요. 온/오프라인 모드에 따라 필터가 유기적으로 작동합니다.
+      </div>
+    </div>
+
+    <!-- Right: Mobile Device Frame Simulator -->
+    <div class="relative w-full max-w-[412px] h-[860px] sm:h-[840px] bg-slate-950 sm:rounded-[48px] sm:border-[12px] border-slate-800 shadow-phone flex flex-col overflow-hidden shrink-0">
+      
+      <!-- Top Speaker Notch & Camera Simulator (Hidden on full mobile viewport) -->
+      <div class="hidden sm:block absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-slate-800 rounded-b-2xl z-50">
+        <div class="absolute top-1.5 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-slate-900 rounded-full"></div>
+        <div class="absolute top-1 right-8 w-2 h-2 bg-slate-900 rounded-full"></div>
+      </div>
+
+      <!-- Phone Status Bar -->
+      <div class="bg-slate-900 text-slate-400 px-6 pt-3 pb-2 flex justify-between items-center text-xs font-semibold select-none z-30 shrink-0">
+        <span id="phone-time" class="font-outfit">09:41</span>
+        <div class="flex items-center gap-1.5">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-three-quarters text-sm"></i>
+        </div>
+      </div>
+
+      <!-- Main Mobile Screen Container -->
+      <div class="flex-1 bg-slate-50 flex flex-col overflow-hidden relative">
+        
+        <!-- Header -->
+        <header class="bg-white px-5 pt-3 pb-4 border-b border-slate-100 flex flex-col gap-3 shrink-0 z-20 shadow-sm">
+          <div class="flex items-center justify-between">
+            <!-- App Logo / Title -->
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-600/20">
+                <i class="fa-solid fa-compass-drafting text-white text-sm"></i>
+              </div>
+              <span class="text-xl font-black font-outfit text-slate-800 tracking-tight">Sailor</span>
+            </div>
+            <!-- Notification Icon -->
+            <button class="relative w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 transition-colors" onclick="showToast('새로운 핫딜 알림이 없습니다.')">
+              <i class="fa-regular fa-bell"></i>
+              <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
+            </button>
+          </div>
+
+          <!-- Search Bar Container -->
+          <div class="relative w-full">
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="상품명 또는 마트명을 입력하세요" 
+              class="w-full bg-slate-100 text-slate-800 placeholder-slate-400 text-sm pl-11 pr-10 py-3.5 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:bg-white transition-all shadow-inner"
+            >
+            <button 
+              id="search-clear-btn" 
+              class="absolute right-3.5 top-1/2 transform -translate-y-1/2 w-6 h-6 rounded-full bg-slate-200 text-slate-500 text-xs flex items-center justify-center hover:bg-slate-300 transition-colors hidden"
+              onclick="clearSearch()"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- Toggle Switch Bar (Online/Offline) -->
+        <div class="bg-white px-5 py-3 border-b border-slate-100 shrink-0 z-20">
+          <div class="relative bg-slate-100 p-1 rounded-2xl flex items-center justify-between select-none">
+            <!-- Sliding Background Pill -->
+            <div id="toggle-pill" class="toggle-slider absolute top-1 left-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-md border border-slate-200/50 z-0"></div>
+            
+            <!-- Online Button -->
+            <button 
+              id="tab-online-btn" 
+              class="relative z-10 w-1/2 py-2.5 text-center text-xs font-bold transition-all text-indigo-600"
+              onclick="switchTab('online')"
+            >
+              <i class="fa-solid fa-globe mr-1.5"></i>지마켓 온라인 최저가
+            </button>
+            
+            <!-- Offline Button -->
+            <button 
+              id="tab-offline-btn" 
+              class="relative z-10 w-1/2 py-2.5 text-center text-xs font-bold transition-all text-slate-500"
+              onclick="switchTab('offline')"
+            >
+              <i class="fa-solid fa-map-pin mr-1.5"></i>내 주변 오프라인 세일
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Sorting Bar -->
+        <div class="bg-white px-5 py-3 border-b border-slate-100 flex flex-col gap-2.5 shrink-0 z-20 shadow-sm">
+          
+          <!-- Distance Filter Row (Offline Only) -->
+          <div id="distance-filter-container" class="flex flex-col gap-1.5 transition-all duration-300 opacity-50 select-none">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-semibold flex items-center gap-1.5">
+                <i class="fa-solid fa-location-arrow"></i>나와의 거리 설정
+              </span>
+              <span id="distance-status" class="text-slate-500 font-bold">오프라인 모드 전용</span>
+            </div>
+            
+            <!-- Distance Buttons Group -->
+            <div class="flex items-center gap-1.5 w-full">
+              <button 
+                data-distance="all" 
+                class="distance-btn flex-1 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200/40 pointer-events-none transition-all duration-200"
+                onclick="selectDistance('all')"
+              >전체</button>
+              <button 
+                data-distance="1" 
+                class="distance-btn flex-1 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200/40 pointer-events-none transition-all duration-200"
+                onclick="selectDistance(1)"
+              >1km 이내</button>
+              <button 
+                data-distance="3" 
+                class="distance-btn flex-1 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200/40 pointer-events-none transition-all duration-200"
+                onclick="selectDistance(3)"
+              >3km 이내</button>
+              <button 
+                data-distance="5" 
+                class="distance-btn flex-1 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-400 border border-slate-200/40 pointer-events-none transition-all duration-200"
+                onclick="selectDistance(5)"
+              >5km 이내</button>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="h-[1px] bg-slate-100 w-full"></div>
+
+          <!-- Sort Filter Row -->
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-500 font-medium" id="results-count">검색 결과 0건</span>
+            
+            <div class="relative flex items-center">
+              <i class="fa-solid fa-sort text-slate-400 absolute left-3 pointer-events-none text-xs"></i>
+              <select 
+                id="sort-select" 
+                class="appearance-none bg-slate-50 text-slate-700 text-xs pl-8 pr-8 py-2 rounded-xl border border-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all cursor-pointer"
+                onchange="handleSortChange(this.value)"
+              >
+                <option value="default">기본순</option>
+                <option value="discount">할인율 높은 순</option>
+                <option value="price">최저가 순</option>
+              </select>
+              <i class="fa-solid fa-chevron-down text-slate-400 absolute right-3 pointer-events-none text-[10px]"></i>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Cards List Area (Scrollable) -->
+        <div id="results-list" class="flex-1 overflow-y-auto px-5 py-4 space-y-3.5 bg-slate-50 relative">
+          <!-- Cards injected dynamically here -->
+        </div>
+
+        <!-- Bottom Navigation Bar (App mockup footer) -->
+        <nav class="bg-white border-t border-slate-100 py-2 px-6 flex justify-around items-center shrink-0 z-20 text-slate-400 select-none">
+          <button class="flex flex-col items-center gap-0.5 text-indigo-600">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[9px] font-bold">홈</span>
+          </button>
+          <button class="flex flex-col items-center gap-0.5 hover:text-indigo-600 transition-colors" onclick="showToast('즐겨찾기 목록은 프로토타입에서 제공하지 않습니다.')">
+            <i class="fa-regular fa-heart text-lg"></i>
+            <span class="text-[9px] font-semibold">즐겨찾기</span>
+          </button>
+          <button class="flex flex-col items-center gap-0.5 hover:text-indigo-600 transition-colors" onclick="showToast('지도 딜 보기는 준비 중입니다.')">
+            <i class="fa-regular fa-map text-lg"></i>
+            <span class="text-[9px] font-semibold">세일지도</span>
+          </button>
+          <button class="flex flex-col items-center gap-0.5 hover:text-indigo-600 transition-colors" onclick="showToast('마이페이지는 준비 중입니다.')">
+            <i class="fa-regular fa-user text-lg"></i>
+            <span class="text-[9px] font-semibold">마이세일러</span>
+          </button>
+        </nav>
+
+        <!-- Bottom home indicator bar for iPhone mock -->
+        <div class="bg-white pb-1.5 flex justify-center w-full select-none z-20">
+          <div class="w-32 h-1 bg-slate-300 rounded-full"></div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Product Detail Modal -->
+  <div id="detail-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl transform scale-95 transition-transform duration-300 flex flex-col">
+      <!-- Modal Header Image -->
+      <div class="h-44 bg-gradient-to-tr from-indigo-500 to-indigo-800 relative flex items-center justify-center p-6 text-white text-center">
+        <button class="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/20 hover:bg-black/35 flex items-center justify-center text-white transition-colors" onclick="closeModal()">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div>
+          <span id="modal-badge" class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-white/20 border border-white/20 uppercase tracking-wider block w-max mx-auto mb-2">지마켓</span>
+          <h2 id="modal-name" class="text-xl font-bold tracking-tight line-clamp-2">농심 신라면</h2>
+        </div>
+      </div>
+
+      <!-- Modal Content -->
+      <div class="p-6 space-y-5">
+        <!-- Prices -->
+        <div class="flex justify-between items-center border-b border-slate-100 pb-4">
+          <span class="text-sm text-slate-400 font-medium">판매가 정보</span>
+          <div class="text-right">
+            <span id="modal-original-price" class="price-strike text-xs block">4,500원</span>
+            <div class="flex items-center justify-end gap-2 mt-1">
+              <span id="modal-discount" class="text-xl font-black font-outfit text-discount-red">30%</span>
+              <span id="modal-sale-price" class="text-2xl font-black text-slate-800 font-outfit">3,150원</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail info list -->
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-400">판매 유형</span>
+            <span id="modal-type-text" class="text-slate-800 font-bold">온라인 스토어</span>
+          </div>
+          <div id="modal-distance-row" class="flex justify-between">
+            <span class="text-slate-400">나와의 거리</span>
+            <span id="modal-distance-text" class="text-indigo-600 font-bold">0.8 km</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">유효 정보 소스</span>
+            <span id="modal-source-text" class="text-slate-800 font-medium">지마켓 스마트배송</span>
+          </div>
+        </div>
+
+        <!-- Simulated dynamic stock status -->
+        <div class="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex gap-3 text-xs text-indigo-800">
+          <i class="fa-solid fa-clock-rotate-left text-sm mt-0.5"></i>
+          <div>
+            <p class="font-bold">실시간 세일 알림</p>
+            <p class="text-indigo-600/90 mt-0.5">이 상품은 마트 실시간 소싱 데이터를 연동하여 제공하는 세일 정보입니다. 재고가 상시 소진될 수 있습니다.</p>
+          </div>
+        </div>
+
+        <!-- CTA Buttons -->
+        <div class="flex gap-2">
+          <button 
+            id="modal-fav-btn"
+            class="w-12 h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-rose-500 transition-colors flex items-center justify-center shrink-0"
+            onclick="toggleModalFavorite(this)"
+          >
+            <i class="fa-regular fa-heart text-lg"></i>
+          </button>
+          <button 
+            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            onclick="triggerPurchaseSim()"
+          >
+            <i class="fa-solid fa-shopping-bag"></i>구매하러 가기
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900/90 backdrop-blur text-white px-5 py-3 rounded-2xl text-xs font-semibold shadow-xl flex items-center gap-2 z-[200] opacity-0 translate-y-3 pointer-events-none transition-all duration-300">
+    <i class="fa-solid fa-circle-info text-indigo-400 text-sm"></i>
+    <span id="toast-text">토스트 메시지</span>
+  </div>
+
+  <!-- Script for business logic -->
+  <script>
+    // 1. Mock Data Setup (Expanded as proposed)
+    const mockData = [
+      { id: 1, type: "online", source: "지마켓", name: "농심 신라면 120g x 20봉", originalPrice: 20000, salePrice: 15000, discountRate: 25, distance: null },
+      { id: 2, type: "online", source: "지마켓 스마일배송", name: "농심 신라면 120g x 40봉", originalPrice: 40000, salePrice: 28000, discountRate: 30, distance: null },
+      { id: 3, type: "offline", source: "이마트", name: "농심 신라면 5입팩", originalPrice: 4500, salePrice: 3800, discountRate: 15, distance: 1.2 },
+      { id: 4, type: "offline", source: "홈플러스 익스프레스", name: "농심 신라면 5입팩", originalPrice: 4500, salePrice: 3150, discountRate: 30, distance: 0.8 },
+      { id: 5, type: "offline", source: "동네 GS25", name: "농심 신라면 1봉", originalPrice: 1000, salePrice: 900, discountRate: 10, distance: 0.3 },
+      
+      // Expanded Data
+      { id: 6, type: "online", source: "지마켓", name: "크리넥스 3겹 데코앤소프트 화장지 30m x 30롤", originalPrice: 32000, salePrice: 22400, discountRate: 30, distance: null },
+      { id: 7, type: "offline", source: "이마트", name: "깨끗한나라 3겹 화장지 30롤", originalPrice: 19900, salePrice: 13930, discountRate: 30, distance: 1.1 },
+      { id: 8, type: "offline", source: "홈플러스", name: "크리넥스 울트라클린 30롤", originalPrice: 31900, salePrice: 21900, discountRate: 31, distance: 2.8 },
+      { id: 9, type: "offline", source: "동네 CU", name: "매일유업 바나나우유 240ml", originalPrice: 1700, salePrice: 1360, discountRate: 20, distance: 0.4 },
+      { id: 10, type: "offline", source: "동네 GS25", name: "서울우유 1L (나100%)", originalPrice: 3050, salePrice: 2600, discountRate: 14, distance: 0.25 },
+      { id: 11, type: "online", source: "지마켓 스마일배송", name: "제주삼다수 무라벨 2L x 12개", originalPrice: 18000, salePrice: 12600, discountRate: 30, distance: null },
+      { id: 12, type: "offline", source: "이마트", name: "제주삼다수 2L x 6개", originalPrice: 6200, salePrice: 5500, discountRate: 11, distance: 1.5 },
+      { id: 13, type: "offline", source: "동네 GS 더프레시", name: "한돈 삼겹살 구이용 1kg", originalPrice: 28000, salePrice: 19600, discountRate: 30, distance: 3.2 },
+      { id: 14, type: "offline", source: "이마트 에브리데이", name: "체리 500g (미국산)", originalPrice: 12000, salePrice: 7900, discountRate: 34, distance: 4.8 },
+      { id: 15, type: "online", source: "지마켓", name: "동원참치 라이트스탠다드 100g x 10캔", originalPrice: 22000, salePrice: 14900, discountRate: 32, distance: null }
+    ];
+
+    // 2. Application State Variables
+    let currentTab = "online"; // "online" | "offline"
+    let searchQuery = "";
+    let distanceLimit = "all"; // "all" | 1 | 3 | 5
+    let sortBy = "default"; // "default" | "discount" | "price"
+
+    // 3. Document Elements
+    const searchInput = document.getElementById("search-input");
+    const searchClearBtn = document.getElementById("search-clear-btn");
+    const togglePill = document.getElementById("toggle-pill");
+    const tabOnlineBtn = document.getElementById("tab-online-btn");
+    const tabOfflineBtn = document.getElementById("tab-offline-btn");
+    const distanceFilterContainer = document.getElementById("distance-filter-container");
+    const distanceStatus = document.getElementById("distance-status");
+    const resultsCount = document.getElementById("results-count");
+    const resultsList = document.getElementById("results-list");
+    const sortSelect = document.getElementById("sort-select");
+
+    // Modal elements
+    const detailModal = document.getElementById("detail-modal");
+    const modalBadge = document.getElementById("modal-badge");
+    const modalName = document.getElementById("modal-name");
+    const modalOriginalPrice = document.getElementById("modal-original-price");
+    const modalDiscount = document.getElementById("modal-discount");
+    const modalSalePrice = document.getElementById("modal-sale-price");
+    const modalTypeText = document.getElementById("modal-type-text");
+    const modalDistanceRow = document.getElementById("modal-distance-row");
+    const modalDistanceText = document.getElementById("modal-distance-text");
+    const modalSourceText = document.getElementById("modal-source-text");
+    const modalFavBtn = document.getElementById("modal-fav-btn");
+
+    // 4. Initialize Function
+    window.addEventListener("DOMContentLoaded", () => {
+      // Set current phone clock
+      updatePhoneClock();
+      setInterval(updatePhoneClock, 60000);
+
+      // Add Search input listener
+      searchInput.addEventListener("input", (e) => {
+        searchQuery = e.target.value.trim();
+        if (searchQuery.length > 0) {
+          searchClearBtn.classList.remove("hidden");
+        } else {
+          searchClearBtn.classList.add("hidden");
+        }
+        render();
+      });
+
+      // Render default view
+      render();
+    });
+
+    // 5. Update Clock Function
+    function updatePhoneClock() {
+      const timeSpan = document.getElementById("phone-time");
+      if (timeSpan) {
+        const now = new Date();
+        let hours = now.getHours();
+        let minutes = now.getMinutes();
+        hours = hours < 10 ? '0' + hours : hours;
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        timeSpan.textContent = `${hours}:${minutes}`;
+      }
+    }
+
+    // 6. Tab switching between Online & Offline
+    function switchTab(tab) {
+      if (currentTab === tab) return;
+      currentTab = tab;
+
+      // Update toggle slider style
+      if (tab === "online") {
+        togglePill.style.transform = "translateX(0)";
+        tabOnlineBtn.classList.add("text-indigo-600");
+        tabOnlineBtn.classList.remove("text-slate-500");
+        tabOfflineBtn.classList.add("text-slate-500");
+        tabOfflineBtn.classList.remove("text-indigo-600");
+
+        // Disable distance filters visual state & interaction
+        distanceFilterContainer.classList.add("opacity-50");
+        distanceStatus.textContent = "오프라인 모드 전용";
+        distanceStatus.classList.remove("text-indigo-600");
+        distanceStatus.classList.add("text-slate-500");
+        document.querySelectorAll(".distance-btn").forEach(btn => {
+          btn.classList.add("pointer-events-none", "bg-slate-100", "text-slate-400");
+          btn.classList.remove("bg-white", "text-slate-800", "border-indigo-600", "bg-indigo-600", "text-white");
+        });
+      } else {
+        const moveX = togglePill.parentElement.offsetWidth / 2 - 2;
+        togglePill.style.transform = `translateX(${moveX}px)`;
+        tabOfflineBtn.classList.add("text-indigo-600");
+        tabOfflineBtn.classList.remove("text-slate-500");
+        tabOnlineBtn.classList.add("text-slate-500");
+        tabOnlineBtn.classList.remove("text-indigo-600");
+
+        // Enable distance filters visual state & interaction
+        distanceFilterContainer.classList.remove("opacity-50");
+        distanceStatus.textContent = "내 주변 매장 반경";
+        distanceStatus.classList.add("text-indigo-600");
+        distanceStatus.classList.remove("text-slate-500");
+        document.querySelectorAll(".distance-btn").forEach(btn => {
+          btn.classList.remove("pointer-events-none", "text-slate-400");
+          btn.classList.add("cursor-pointer");
+        });
+
+        // Trigger visual highlight on current selected distance
+        selectDistance(distanceLimit);
+      }
+
+      // Re-render items
+      render();
+    }
+
+    // 7. Distance filter handling
+    function selectDistance(limit) {
+      if (currentTab !== "offline") return;
+      distanceLimit = limit;
+
+      document.querySelectorAll(".distance-btn").forEach(btn => {
+        const val = btn.getAttribute("data-distance");
+        const isSelected = val === String(limit);
+        
+        if (isSelected) {
+          btn.classList.remove("bg-slate-100", "text-slate-500", "border-slate-200/40");
+          btn.classList.add("bg-indigo-600", "text-white", "border-indigo-600", "shadow-sm");
+        } else {
+          btn.classList.remove("bg-indigo-600", "text-white", "border-indigo-600", "shadow-sm");
+          btn.classList.add("bg-slate-100", "text-slate-700", "border-slate-200/40");
+        }
+      });
+
+      render();
+    }
+
+    // 8. Sorting Handler
+    function handleSortChange(val) {
+      sortBy = val;
+      render();
+    }
+
+    // 9. Clear search input
+    function clearSearch() {
+      searchInput.value = "";
+      searchQuery = "";
+      searchClearBtn.classList.add("hidden");
+      render();
+    }
+
+    // 10. Main Rendering Logic (Filter & Sort Pipeline)
+    function render() {
+      // Step A: Filter logic
+      let filteredData = mockData.filter(item => {
+        // Tab type matching
+        if (item.type !== currentTab) return false;
+
+        // Search matching
+        if (searchQuery !== "") {
+          const matchName = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchSource = item.source.toLowerCase().includes(searchQuery.toLowerCase());
+          if (!matchName && !matchSource) return false;
+        }
+
+        // Distance matching (Offline tab only)
+        if (currentTab === "offline" && distanceLimit !== "all") {
+          const limitNum = parseFloat(distanceLimit);
+          if (item.distance === null || item.distance > limitNum) return false;
+        }
+
+        return true;
+      });
+
+      // Step B: Sorting logic
+      if (sortBy === "discount") {
+        // Highest discount first
+        filteredData.sort((a, b) => b.discountRate - a.discountRate);
+      } else if (sortBy === "price") {
+        // Lowest price first
+        filteredData.sort((a, b) => a.salePrice - b.salePrice);
+      } else {
+        // Default (original index/ID)
+        filteredData.sort((a, b) => a.id - b.id);
+      }
+
+      // Step C: Update total results display count
+      resultsCount.textContent = `검색 결과 ${filteredData.length}건`;
+
+      // Step D: Render cards
+      resultsList.innerHTML = "";
+
+      if (filteredData.length === 0) {
+        // Show beautiful Empty State
+        resultsList.innerHTML = `
+          <div class="flex flex-col items-center justify-center py-16 text-center space-y-4 fade-in">
+            <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+              <i class="fa-solid fa-cookie-bite text-3xl"></i>
+            </div>
+            <div class="space-y-1">
+              <p class="text-sm font-bold text-slate-700">검색 조건에 맞는 할인 정보가 없습니다</p>
+              <p class="text-xs text-slate-400 max-w-[240px]">다른 상품명을 검색하거나 오프라인 거리 필터를 확대해 보세요!</p>
+            </div>
+            <button onclick="resetFilters()" class="text-xs font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-xl hover:bg-indigo-100 transition-colors">
+              필터 초기화
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      filteredData.forEach((item, index) => {
+        // Custom badge styling based on store/merchant source
+        let badgeColor = "bg-slate-100 text-slate-700 border-slate-200";
+        if (item.source.includes("지마켓")) {
+          badgeColor = "bg-blue-50 text-blue-600 border-blue-100";
+        } else if (item.source.includes("이마트")) {
+          badgeColor = "bg-amber-50 text-amber-600 border-amber-200";
+        } else if (item.source.includes("홈플러스")) {
+          badgeColor = "bg-rose-50 text-rose-600 border-rose-100";
+        } else if (item.source.includes("GS25") || item.source.includes("GS")) {
+          badgeColor = "bg-teal-50 text-teal-600 border-teal-100";
+        } else if (item.source.includes("CU")) {
+          badgeColor = "bg-purple-50 text-purple-600 border-purple-100";
+        }
+
+        const distanceBadge = item.distance !== null 
+          ? `<span class="text-[10px] font-bold text-indigo-600 flex items-center gap-0.5">
+              <i class="fa-solid fa-location-arrow text-[8px]"></i>${item.distance}km
+             </span>`
+          : "";
+
+        const card = document.createElement("div");
+        card.className = "bg-white p-4.5 rounded-2xl border border-slate-200/50 shadow-sm flex flex-col gap-3.5 hover:shadow-premium hover:border-slate-300 transition-all duration-300 cursor-pointer fade-in";
+        card.style.animationDelay = `${index * 50}ms`;
+        card.onclick = () => openModal(item);
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 text-[9px] font-bold rounded-lg border uppercase tracking-wider ${badgeColor}">
+              ${item.source}
+            </span>
+            ${distanceBadge}
+          </div>
+          
+          <h4 class="text-sm font-bold text-slate-800 line-clamp-2 leading-snug">
+            ${item.name}
+          </h4>
+
+          <div class="flex items-end justify-between border-t border-slate-50 pt-3">
+            <div class="flex flex-col">
+              <span class="price-strike text-[10px] font-medium block h-3">
+                ${numberWithCommas(item.originalPrice)}원
+              </span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-xs text-slate-400 font-medium text-[10px]">혜택가</span>
+                <span class="text-base font-extrabold text-slate-800 font-outfit">
+                  ${numberWithCommas(item.salePrice)}원
+                </span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1 bg-discount-bg px-2.5 py-1 rounded-xl">
+              <span class="text-xs font-black text-discount-red font-outfit">${item.discountRate}%</span>
+              <span class="text-[9px] font-black text-discount-red">할인</span>
+            </div>
+          </div>
+        `;
+
+        resultsList.appendChild(card);
+      });
+    }
+
+    // Helper: Reset all settings
+    function resetFilters() {
+      searchQuery = "";
+      searchInput.value = "";
+      searchClearBtn.classList.add("hidden");
+      distanceLimit = "all";
+      sortBy = "default";
+      sortSelect.value = "default";
+      if (currentTab === "offline") {
+        selectDistance("all");
+      } else {
+        render();
+      }
+    }
+
+    // Helper: Number Formatter
+    function numberWithCommas(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // 11. Modal Detail functions
+    let selectedItemForFav = null;
+    function openModal(item) {
+      selectedItemForFav = item;
+      modalBadge.textContent = item.source;
+      modalName.textContent = item.name;
+      modalOriginalPrice.textContent = `${numberWithCommas(item.originalPrice)}원`;
+      modalDiscount.textContent = `${item.discountRate}%`;
+      modalSalePrice.textContent = `${numberWithCommas(item.salePrice)}원`;
+      
+      // Customize source text style
+      modalSourceText.textContent = item.source;
+      
+      if (item.type === "online") {
+        modalTypeText.textContent = "온라인 최저가 딜";
+        modalDistanceRow.classList.add("hidden");
+      } else {
+        modalTypeText.textContent = "내 주변 오프라인 딜";
+        modalDistanceRow.classList.remove("hidden");
+        modalDistanceText.textContent = `${item.distance} km 이내`;
+      }
+
+      // Check fav icon state
+      const isFav = localStorage.getItem(`sailor_fav_${item.id}`) === 'true';
+      const icon = modalFavBtn.querySelector('i');
+      if (isFav) {
+        icon.className = 'fa-solid fa-heart text-rose-500';
+        modalFavBtn.classList.add('bg-rose-50');
+      } else {
+        icon.className = 'fa-regular fa-heart';
+        modalFavBtn.classList.remove('bg-rose-50');
+      }
+
+      detailModal.classList.remove("hidden");
+      // Force repaint to trigger animation
+      detailModal.offsetWidth;
+      detailModal.classList.remove("opacity-0");
+      detailModal.querySelector('.transform').classList.remove("scale-95");
+      detailModal.querySelector('.transform').classList.add("scale-100");
+    }
+
+    function closeModal() {
+      detailModal.classList.add("opacity-0");
+      detailModal.querySelector('.transform').classList.remove("scale-100");
+      detailModal.querySelector('.transform').classList.add("scale-95");
+      setTimeout(() => {
+        detailModal.classList.add("hidden");
+      }, 300);
+    }
+
+    // Favorite button click in Modal
+    function toggleModalFavorite(btn) {
+      if (!selectedItemForFav) return;
+      const key = `sailor_fav_${selectedItemForFav.id}`;
+      const isCurrentlyFav = localStorage.getItem(key) === 'true';
+      const nextState = !isCurrentlyFav;
+      
+      localStorage.setItem(key, String(nextState));
+      const icon = btn.querySelector('i');
+      
+      if (nextState) {
+        icon.className = 'fa-solid fa-heart text-rose-500';
+        btn.classList.add('bg-rose-50');
+        showToast(`'${selectedItemForFav.name.substring(0, 10)}...' 상품을 즐겨찾기에 등록했습니다.`);
+      } else {
+        icon.className = 'fa-regular fa-heart text-slate-500';
+        btn.classList.remove('bg-rose-50');
+        showToast('즐겨찾기를 취소했습니다.');
+      }
+    }
+
+    // Real action trigger to navigate to respective shopping mall
+    function triggerPurchaseSim() {
+      if (!selectedItemForFav) return;
+      
+      const source = selectedItemForFav.source;
+      const name = selectedItemForFav.name;
+      let url = "";
+      
+      if (source.includes("지마켓")) {
+        url = `https://browse.gmarket.co.kr/search?keyword=${encodeURIComponent(name)}`;
+      } else if (source.includes("이마트")) {
+        url = `https://emart.ssg.com/search.ssg?target=all&query=${encodeURIComponent(name)}`;
+      } else if (source.includes("홈플러스")) {
+        url = `https://front.homeplus.co.kr/search?entry=direct&keyword=${encodeURIComponent(name)}`;
+      } else if (source.includes("GS25") || source.includes("GS")) {
+        url = "https://gs25.gsretail.com/";
+      } else if (source.includes("CU")) {
+        url = "https://pocketcu.co.kr/";
+      } else {
+        url = `https://www.google.com/search?q=${encodeURIComponent(name)}`;
+      }
+      
+      showToast(`${source} 쇼핑몰로 이동합니다...`);
+      
+      setTimeout(() => {
+        window.open(url, '_blank');
+      }, 800);
+      
+      closeModal();
+    }
+
+    // 12. Toast notifications handler
+    let toastTimeout = null;
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      const toastText = document.getElementById("toast-text");
+      
+      toastText.textContent = message;
+      
+      clearTimeout(toastTimeout);
+      
+      toast.classList.remove("opacity-0", "translate-y-3", "pointer-events-none");
+      toast.classList.add("opacity-100", "translate-y-0");
+      
+      toastTimeout = setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-3", "pointer-events-none");
+        toast.classList.remove("opacity-100", "translate-y-0");
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
