@@ -3,6 +3,9 @@
 > **현명한 쇼핑을 위한 최저가 정보 나침반, 세일러(Sailor)**  
 > G마켓 온라인 최저가부터 내 주변 동네 마트의 실시간 오프라인 세일 정보까지, 직관적인 거리/할인율 필터 조작으로 최적의 핫딜을 탐색하는 모바일 우선(Mobile-first) 웹 앱 프로토타입입니다.
 
+### 🚀 [**프로토타입 즉시 실행하기 (클릭)**](https://lgw7126.github.io/antigravity-sailor-app/)
+> **[HTMLPreview로 즉시 실행하기]** GitHub Pages 활성화 전이라면 [이 링크](https://htmlpreview.github.io/?https://github.com/lgw7126/antigravity-sailor-app/blob/main/index.html)를 클릭하여 즉시 브라우저에서 실행해 볼 수 있습니다.
+
 ---
 
 ## 🔍 프로젝트 개요
